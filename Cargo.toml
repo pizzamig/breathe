@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 async-std = { version = "1", features = [ "attributes", "unstable" ] }
 strum = { version = "0.20", features = ["derive"] }
+indicatif = "0.15"

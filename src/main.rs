@@ -43,12 +43,25 @@ async fn breath() {
     limits.insert(BreathPhase::BreathOut, 7u32);
     limits.insert(BreathPhase::HoldOut, 0u32);
 
-    println!("NOW: {}", state.phase);
+    let multibar = indicatif::MultiProgress::new();
+    let pb = multibar.add(indicatif::ProgressBar::new(56));
+    pb.set_style(indicatif::ProgressStyle::default_bar().template("{spinner} {bar:40} {msg}"));
+    pb.set_message(&state.phase.to_string());
+    let total = multibar.add(indicatif::ProgressBar::new(300));
+    total.set_style(
+        indicatif::ProgressStyle::default_bar().template("{percent} {wide_bar} {elapsed}"),
+    );
+    async_std::task::spawn(async move {
+        multibar.join_and_clear();
+    });
     while interval.next().await.is_some() {
         state.counter += 1;
+        pb.inc(56 / (*limits.get(&state.phase).unwrap() as u64));
+        total.inc(1);
         while *limits.get(&state.phase).unwrap() <= state.counter {
             state.next();
-            println!("NOW: {}", state.phase);
+            pb.set_message(&state.phase.to_string());
+            pb.reset();
         }
     }
 }
