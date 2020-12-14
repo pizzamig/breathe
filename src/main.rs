@@ -39,8 +39,8 @@ async fn breath() {
     let mut state = State::new();
     let mut limits = HashMap::new();
     limits.insert(BreathPhase::BreathIn, 4u32);
-    limits.insert(BreathPhase::HoldIn, 8u32);
-    limits.insert(BreathPhase::BreathOut, 7u32);
+    limits.insert(BreathPhase::HoldIn, 7u32);
+    limits.insert(BreathPhase::BreathOut, 8u32);
     limits.insert(BreathPhase::HoldOut, 0u32);
 
     let multibar = indicatif::MultiProgress::new();
@@ -52,7 +52,7 @@ async fn breath() {
         indicatif::ProgressStyle::default_bar().template("{percent} {wide_bar} {elapsed}"),
     );
     async_std::task::spawn(async move {
-        multibar.join_and_clear();
+        multibar.join_and_clear().unwrap_or_default();
     });
     while interval.next().await.is_some() {
         state.counter += 1;
@@ -62,6 +62,9 @@ async fn breath() {
             state.next();
             pb.set_message(&state.phase.to_string());
             pb.reset();
+        }
+        if total.position() == total.length() {
+            break;
         }
     }
 }
