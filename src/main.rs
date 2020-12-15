@@ -49,7 +49,8 @@ async fn breath() {
     pb.set_message(&state.phase.to_string());
     let total = multibar.add(indicatif::ProgressBar::new(300));
     total.set_style(
-        indicatif::ProgressStyle::default_bar().template("{percent} {wide_bar} {elapsed}"),
+        indicatif::ProgressStyle::default_bar()
+            .template("{percent:>3}% {wide_bar} {elapsed_precise}"),
     );
     async_std::task::spawn(async move {
         multibar.join_and_clear().unwrap_or_default();
