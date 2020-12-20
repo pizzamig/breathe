@@ -10,3 +10,9 @@ edition = "2018"
 async-std = { version = "1", features = [ "attributes", "unstable" ] }
 strum = { version = "0.20", features = ["derive"] }
 indicatif = "0.15"
+structopt = "0.3"
+structopt-flags = "0.3"
+env_logger = "0.8"
+serde = { version = "1", features = ["derive"] }
+toml = { version = "0.5" }
+dirs = "3"

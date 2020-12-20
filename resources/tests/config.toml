@@ -1,0 +1,16 @@
+counter_type= "Time"
+duration = 300
+
+[patterns]
+
+[patterns.relax]
+breath_in = 4
+breath_out = 8
+hold_in = 7
+
+[patterns.relax_short]
+breath_in = 4
+breath_out = 8
+hold_in = 7
+counter_type = "Iteration"
+duration = 4

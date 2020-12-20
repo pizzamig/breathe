@@ -1,52 +1,23 @@
+mod breath;
+mod config;
+
 use async_std::prelude::*;
-use std::collections::HashMap;
-use strum::Display;
 
-#[derive(PartialEq, Hash, Display)]
-enum BreathPhase {
-    BreathIn,
-    HoldIn,
-    BreathOut,
-    HoldOut,
-}
-impl Eq for BreathPhase {}
-
-struct State {
-    phase: BreathPhase,
-    counter: u32,
+struct BreathSessionParams {
+    pattern: config::Pattern,
+    session_type: config::CounterType,
+    duration: u64,
 }
 
-impl State {
-    fn new() -> Self {
-        State {
-            phase: BreathPhase::BreathIn,
-            counter: 0,
-        }
-    }
-    fn next(&mut self) {
-        self.phase = match self.phase {
-            BreathPhase::BreathIn => BreathPhase::HoldIn,
-            BreathPhase::HoldIn => BreathPhase::BreathOut,
-            BreathPhase::BreathOut => BreathPhase::HoldOut,
-            BreathPhase::HoldOut => BreathPhase::BreathIn,
-        };
-        self.counter = 0;
-    }
-}
-
-async fn breath() {
+async fn breath(params: BreathSessionParams) {
     let mut interval = async_std::stream::interval(std::time::Duration::from_secs(1));
-    let mut state = State::new();
-    let mut limits = HashMap::new();
-    limits.insert(BreathPhase::BreathIn, 4u32);
-    limits.insert(BreathPhase::HoldIn, 7u32);
-    limits.insert(BreathPhase::BreathOut, 8u32);
-    limits.insert(BreathPhase::HoldOut, 0u32);
+    let mut session =
+        breath::BreathingSession::new(&params.pattern, params.session_type, params.duration);
 
     let multibar = indicatif::MultiProgress::new();
     let pb = multibar.add(indicatif::ProgressBar::new(56));
     pb.set_style(indicatif::ProgressStyle::default_bar().template("{spinner} {bar:40} {msg}"));
-    pb.set_message(&state.phase.to_string());
+    pb.set_message(&session.get_phase_str());
     let total = multibar.add(indicatif::ProgressBar::new(300));
     total.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -56,21 +27,52 @@ async fn breath() {
         multibar.join_and_clear().unwrap_or_default();
     });
     while interval.next().await.is_some() {
-        state.counter += 1;
-        pb.inc(56 / (*limits.get(&state.phase).unwrap() as u64));
+        pb.inc(56 / session.get_current_phase_length());
         total.inc(1);
-        while *limits.get(&state.phase).unwrap() <= state.counter {
-            state.next();
-            pb.set_message(&state.phase.to_string());
-            pb.reset();
-        }
-        if total.position() == total.length() {
+        session.inc();
+        if session.is_completed() {
             break;
+        }
+        if session.is_state_changed() {
+            pb.set_message(&session.get_phase_str());
+            pb.reset();
         }
     }
 }
 
+use structopt::StructOpt;
+use structopt_flags::LogLevel;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "breathe", about = "A cli tool with breathing exercises")]
+struct Opt {
+    #[structopt(flatten)]
+    config_file: structopt_flags::ConfigFileNoDef,
+    #[structopt(flatten)]
+    verbose: structopt_flags::Verbose,
+    /// select the breathe pattern you want to practice
+    #[structopt(short, long, default_value = "relax")]
+    pattern: String,
+}
+
+use structopt_flags::GetWithDefault;
+
 #[async_std::main]
-async fn main() {
-    breath().await;
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let opt = Opt::from_args();
+    env_logger::builder().filter_level(opt.verbose.get_level_filter());
+    let config_file = opt
+        .config_file
+        .get_with_default(config::get_default_config_file());
+    if let Some(config) = config::get_config(&config_file) {
+        if let Some(pattern) = config.get_pattern(&opt.pattern) {
+            let session = BreathSessionParams {
+                pattern: pattern.clone(),
+                session_type: pattern.counter_type.unwrap_or(config.counter_type),
+                duration: pattern.duration.unwrap_or(config.duration),
+            };
+            breath(session).await;
+        }
+    }
+    Ok(())
 }
