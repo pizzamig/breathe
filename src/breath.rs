@@ -24,7 +24,7 @@ impl BreathPhase {
 #[derive(Debug, Clone)]
 pub(crate) struct BreathCycle {
     cycle: HashMap<BreathPhase, u64>,
-    cycle_length: u64,
+    pub(crate) cycle_length: u64,
 }
 
 impl From<&Pattern> for BreathCycle {
@@ -41,6 +41,15 @@ impl From<&Pattern> for BreathCycle {
                 + pattern.hold_in.unwrap_or(0)
                 + pattern.hold_out.unwrap_or(0),
         }
+    }
+}
+
+impl BreathCycle {
+    fn get_lengths_lcm(&self) -> u64 {
+        self.cycle
+            .values()
+            .filter(|&&x| x != 0)
+            .fold(1, |lcm, &x| num_integer::lcm(lcm, x))
     }
 }
 
@@ -77,12 +86,14 @@ impl BreathingSession {
     fn get_cycle_length(&self) -> u64 {
         self.cycle.cycle_length
     }
-    #[allow(dead_code)]
-    fn get_session_length(&self) -> u64 {
+    pub(crate) fn get_session_length(&self) -> u64 {
         self.session_length
     }
     pub(crate) fn get_phase_str(&self) -> String {
         self.current_state.to_string()
+    }
+    pub(crate) fn get_lengths_lcm(&self) -> u64 {
+        self.cycle.get_lengths_lcm()
     }
     fn next_state(&mut self) {
         let mut temp_state = self.current_state.next();
@@ -110,6 +121,9 @@ impl BreathingSession {
     }
     pub(crate) fn is_state_changed(&self) -> bool {
         self.state_changed
+    }
+    pub(crate) fn print_params(&self) {
+        println!("session lenght: {} seconds", self.session_length);
     }
 }
 
@@ -143,6 +157,19 @@ mod test {
         assert_eq!(got.cycle_length, 19);
     }
 
+    #[test]
+    fn breath_get_lengths_lcm() {
+        let uut = Pattern {
+            breath_in: 4,
+            hold_in: Some(7),
+            breath_out: 8,
+            hold_out: None,
+            counter_type: None,
+            duration: None,
+        };
+        let got: BreathCycle = (&uut).into();
+        assert_eq!(got.get_lengths_lcm(), 56);
+    }
     #[test]
     fn breath_session_ctor_time_session() {
         let p = Pattern {
