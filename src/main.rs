@@ -1,4 +1,4 @@
-mod breath;
+mod breathe;
 mod config;
 
 use async_std::prelude::*;
@@ -9,10 +9,10 @@ struct BreathSessionParams {
     duration: u64,
 }
 
-async fn breath(params: BreathSessionParams) {
+async fn breathe(params: BreathSessionParams) {
     let mut interval = async_std::stream::interval(std::time::Duration::from_secs(1));
     let mut session =
-        breath::BreathingSession::new(&params.pattern, params.session_type, params.duration);
+        breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
 
     session.print_params();
     let multibar = indicatif::MultiProgress::new();
@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 session_type: pattern.counter_type.unwrap_or(config.counter_type),
                 duration: pattern.duration.unwrap_or(config.duration),
             };
-            breath(session).await;
+            breathe(session).await;
         }
     }
     Ok(())
