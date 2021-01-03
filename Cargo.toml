@@ -16,3 +16,4 @@ env_logger = "0.8"
 serde = { version = "1", features = ["derive"] }
 toml = { version = "0.5" }
 dirs = "3"
+num-integer = "0.1"
