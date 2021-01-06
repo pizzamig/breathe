@@ -31,7 +31,7 @@ pub(crate) struct Pattern {
     pub(crate) duration: Option<u64>,
 }
 
-#[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq)]
+#[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq, Copy)]
 pub(crate) enum CounterType {
     Time,
     #[strum(
