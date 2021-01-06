@@ -16,3 +16,11 @@ breath_out = 8
 hold_in = 7
 counter_type = "Iteration"
 duration = 4
+
+[patterns.four]
+breath_in = 4
+breath_out = 4
+hold_in = 4
+hold_out = 4
+counter_type = "Time"
+duration = 300
