@@ -43,13 +43,25 @@ async fn breathe(params: BreathSessionParams) {
     let mut session =
         breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
 
-    session.print_params();
+    println!("{}", params);
+    match params.session_type {
+        config::CounterType::Iteration => session.print_params(),
+        _ => (),
+    };
+    let user_choice = dialoguer::Confirm::new()
+        .with_prompt("Would you like to start the breathing session?")
+        .interact()
+        .unwrap_or(false);
+    if !user_choice {
+        return;
+    }
     let multibar = indicatif::MultiProgress::new();
     let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
-            .template("{spinner} {bar:40} {msg}")
-            .progress_chars("=>-"),
+            .template("{spinner:>4} {bar:40} {msg}")
+            .progress_chars("=>-")
+            .tick_chars(r#"-\|/ "#),
     );
     pb.set_message(&session.get_phase_str());
     let total = multibar.add(indicatif::ProgressBar::new(session.get_session_length()));
@@ -106,7 +118,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 session_type: pattern.counter_type.unwrap_or(config.counter_type),
                 duration: pattern.duration.unwrap_or(config.duration),
             };
-            println!("{}", session);
             breathe(session).await;
         }
     }
