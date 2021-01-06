@@ -9,6 +9,35 @@ struct BreathSessionParams {
     duration: u64,
 }
 
+impl std::fmt::Display for BreathSessionParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let duration = match self.session_type {
+            config::CounterType::Time => "Duration:  ",
+            config::CounterType::Iteration => "Iterations:",
+        };
+        let duration_unit = match self.session_type {
+            config::CounterType::Time => "seconds",
+            _ => "",
+        };
+        write!(
+            f,
+            "Breathe in:   {}
+Hold:         {}
+Breathe out:  {}
+Hold:         {}
+Session type: {}
+{}   {} {}",
+            self.pattern.breath_in,
+            self.pattern.hold_in.unwrap_or(0),
+            self.pattern.breath_out,
+            self.pattern.hold_out.unwrap_or(0),
+            self.session_type,
+            duration,
+            self.duration,
+            duration_unit
+        )
+    }
+}
 async fn breathe(params: BreathSessionParams) {
     let mut interval = async_std::stream::interval(std::time::Duration::from_secs(1));
     let mut session =
@@ -77,6 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 session_type: pattern.counter_type.unwrap_or(config.counter_type),
                 duration: pattern.duration.unwrap_or(config.duration),
             };
+            println!("{}", session);
             breathe(session).await;
         }
     }
