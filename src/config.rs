@@ -20,6 +20,16 @@ impl Config {
             Some(p) => Some(p.clone()),
         }
     }
+    pub(crate) fn print_pattern_list(&self) {
+        self.patterns.iter().for_each(|(name, pattern)| {
+            println!(
+                "{} [{}] [{}]",
+                name,
+                pattern.get_short_string(),
+                pattern.get_short_session_string()
+            )
+        })
+    }
 }
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct Pattern {
@@ -31,6 +41,27 @@ pub(crate) struct Pattern {
     pub(crate) duration: Option<u64>,
 }
 
+impl Pattern {
+    fn get_short_string(&self) -> String {
+        format!(
+            "{}-{}-{}-{}",
+            self.breath_in,
+            self.hold_in.unwrap_or(0),
+            self.breath_out,
+            self.hold_out.unwrap_or(0)
+        )
+    }
+    fn get_short_session_string(&self) -> String {
+        if self.counter_type.is_none() || self.duration.is_none() {
+            "".to_string()
+        } else {
+            match self.counter_type.unwrap() {
+                CounterType::Time => format!("{} seconds", self.duration.unwrap()),
+                CounterType::Iteration => format!("{} iterations", self.duration.unwrap()),
+            }
+        }
+    }
+}
 #[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq, Copy)]
 pub(crate) enum CounterType {
     Time,

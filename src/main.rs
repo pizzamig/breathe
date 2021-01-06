@@ -100,6 +100,8 @@ struct Opt {
     /// select the breathe pattern you want to practice
     #[structopt(short, long, default_value = "relax")]
     pattern: String,
+    #[structopt(short, long)]
+    list: bool,
 }
 
 use structopt_flags::GetWithDefault;
@@ -112,14 +114,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .config_file
         .get_with_default(config::get_default_config_file());
     if let Some(config) = config::get_config(&config_file) {
-        if let Some(pattern) = config.get_pattern(&opt.pattern) {
+        if opt.list {
+            config.print_pattern_list();
+            return Ok(());
+        } else if let Some(pattern) = config.get_pattern(&opt.pattern) {
             let session = BreathSessionParams {
                 pattern: pattern.clone(),
                 session_type: pattern.counter_type.unwrap_or(config.counter_type),
                 duration: pattern.duration.unwrap_or(config.duration),
             };
             breathe(session).await;
+        } else {
+            // TODO: implement proper error
+            eprintln!("no patter found, damn");
         }
+    } else {
+        // TODO: implement proper error
+        eprintln!("no config file found, damn");
     }
     Ok(())
 }
