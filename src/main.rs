@@ -44,12 +44,12 @@ async fn breathe(params: BreathSessionParams) {
         breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
 
     println!("{}", params);
-    match params.session_type {
-        config::CounterType::Iteration => session.print_params(),
-        _ => (),
-    };
+    if let config::CounterType::Iteration = params.session_type {
+        session.print_params();
+    }
     let user_choice = dialoguer::Confirm::new()
         .with_prompt("Would you like to start the breathing session?")
+        .default(true)
         .interact()
         .unwrap_or(false);
     if !user_choice {
