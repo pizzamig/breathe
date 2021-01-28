@@ -59,7 +59,7 @@ async fn breathe(params: BreathSessionParams) {
     let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
-            .template("{spinner:>4} {bar:40} {msg}")
+            .template("{spinner:>4} {bar:80} {msg}")
             .progress_chars("=>-")
             .tick_chars(r#"-\|/ "#),
     );
@@ -67,22 +67,23 @@ async fn breathe(params: BreathSessionParams) {
     let total = multibar.add(indicatif::ProgressBar::new(session.get_session_length()));
     total.set_style(
         indicatif::ProgressStyle::default_bar()
-            .template("{percent:>3}% {wide_bar} {elapsed_precise}")
+            .template("{percent:>3}% {bar:80} {elapsed_precise}")
             .progress_chars("=>-"),
     );
     async_std::task::spawn(async move {
         multibar.join_and_clear().unwrap_or_default();
     });
     while interval.next().await.is_some() {
-        pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
-        total.inc(1);
         session.inc();
         if session.is_completed() {
             break;
         }
+        total.inc(1);
         if session.is_state_changed() {
             pb.set_message(&session.get_phase_str());
             pb.reset();
+        } else {
+            pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
         }
     }
 }
