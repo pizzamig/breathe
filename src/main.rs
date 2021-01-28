@@ -21,12 +21,14 @@ impl std::fmt::Display for BreathSessionParams {
         };
         write!(
             f,
-            "Breathe in:   {}
+            "Description: {}
+Breathe in:   {}
 Hold:         {}
 Breathe out:  {}
 Hold:         {}
 Session type: {}
 {}   {} {}",
+            self.pattern.description,
             self.pattern.breath_in,
             self.pattern.hold_in.unwrap_or(0),
             self.pattern.breath_out,
