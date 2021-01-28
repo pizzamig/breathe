@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - ROADMAP: Add a roadmap file
 - .dockerignore: skip the target folder when running docker build
 - patterns: add more breathing patterns to the config toml example file
+- pattern: add description of breathing patterns
 
 ### Changed
 - layout: length of both bars set to 80
