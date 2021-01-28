@@ -101,6 +101,7 @@ struct Opt {
     /// select the breathe pattern you want to practice
     #[structopt(short, long, default_value = "relax")]
     pattern: String,
+    /// list all available breathe patterns
     #[structopt(short, long)]
     list: bool,
 }
