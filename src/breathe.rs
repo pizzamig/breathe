@@ -148,6 +148,7 @@ mod test {
             hold_out: None,
             counter_type: None,
             duration: None,
+            description: "Test pattern".to_string(),
         };
         let got: BreathCycle = (&uut).into();
         assert_eq!(got.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
@@ -166,6 +167,7 @@ mod test {
             hold_out: None,
             counter_type: None,
             duration: None,
+            description: "Test pattern".to_string(),
         };
         let got: BreathCycle = (&uut).into();
         assert_eq!(got.get_lengths_lcm(), 56);
@@ -179,6 +181,7 @@ mod test {
             hold_out: None,
             counter_type: None,
             duration: None,
+            description: "Test pattern".to_string(),
         };
         let got = BreathingSession::new(&p, CounterType::Time, 60);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
@@ -198,6 +201,7 @@ mod test {
             hold_out: None,
             counter_type: None,
             duration: None,
+            description: "Test pattern".to_string(),
         };
         let got = BreathingSession::new(&p, CounterType::Iteration, 8);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
@@ -217,6 +221,7 @@ mod test {
             hold_out: None,
             counter_type: None,
             duration: None,
+            description: "Test pattern".to_string(),
         };
         let mut got = BreathingSession::new(&p, CounterType::Iteration, 2);
         assert_eq!(got.get_current_phase_length(), 4);

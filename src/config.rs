@@ -23,14 +23,16 @@ impl Config {
     pub(crate) fn print_pattern_list(&self) {
         self.patterns.iter().for_each(|(name, pattern)| {
             println!(
-                "{} [{}] [{}]",
+                "{} [{}] [{}]: {}",
                 name,
                 pattern.get_short_string(),
-                pattern.get_short_session_string()
+                pattern.get_short_session_string(),
+                pattern.description
             )
         })
     }
 }
+
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct Pattern {
     pub(crate) breath_in: u64,
@@ -39,6 +41,7 @@ pub(crate) struct Pattern {
     pub(crate) hold_out: Option<u64>,
     pub(crate) counter_type: Option<CounterType>,
     pub(crate) duration: Option<u64>,
+    pub(crate) description: String,
 }
 
 impl Pattern {
@@ -76,6 +79,7 @@ pub(crate) enum CounterType {
 pub(crate) fn get_default_config_file() -> std::path::PathBuf {
     dirs::config_dir().unwrap().join(CONFIG_DEFAULT_NAME)
 }
+
 pub(crate) fn get_config(config_file: &std::path::Path) -> Option<Config> {
     if config_file.exists() && config_file.is_file() {
         let temp_str = std::fs::read_to_string(config_file).unwrap();
@@ -85,6 +89,7 @@ pub(crate) fn get_config(config_file: &std::path::Path) -> Option<Config> {
         None
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
