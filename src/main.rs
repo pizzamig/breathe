@@ -57,7 +57,9 @@ async fn breathe(params: BreathSessionParams) {
     if !user_choice {
         return;
     }
-    let multibar = indicatif::MultiProgress::new();
+    let multibar = indicatif::MultiProgress::with_draw_target(
+        indicatif::ProgressDrawTarget::stdout_with_hz(10),
+    );
     let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
