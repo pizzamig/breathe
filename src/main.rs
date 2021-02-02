@@ -57,7 +57,9 @@ async fn breathe(params: BreathSessionParams) {
     if !user_choice {
         return;
     }
-    let multibar = indicatif::MultiProgress::new();
+    let multibar = indicatif::MultiProgress::with_draw_target(
+        indicatif::ProgressDrawTarget::stdout_with_hz(10),
+    );
     let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -73,19 +75,19 @@ async fn breathe(params: BreathSessionParams) {
             .progress_chars("=>-"),
     );
     async_std::task::spawn(async move {
-        multibar.join_and_clear().unwrap_or_default();
+        multibar.join().unwrap_or_default();
     });
     while interval.next().await.is_some() {
         session.inc();
-        if session.is_completed() {
-            break;
-        }
         total.inc(1);
         if session.is_state_changed() {
             pb.set_message(&session.get_phase_str());
             pb.reset();
         } else {
             pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
+        }
+        if session.is_completed() {
+            break;
         }
     }
 }
