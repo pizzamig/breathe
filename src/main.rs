@@ -79,13 +79,13 @@ async fn breathe(params: BreathSessionParams) {
     });
     while interval.next().await.is_some() {
         session.inc();
-        total.inc(1);
         if session.is_state_changed() {
             pb.set_message(&session.get_phase_str());
             pb.reset();
         } else {
             pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
         }
+        total.inc(1);
         if session.is_completed() {
             break;
         }
