@@ -57,9 +57,7 @@ async fn breathe(params: BreathSessionParams) {
     if !user_choice {
         return;
     }
-    let multibar = indicatif::MultiProgress::with_draw_target(
-        indicatif::ProgressDrawTarget::stdout_with_hz(10),
-    );
+    let multibar = indicatif::MultiProgress::new();
     let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -79,13 +77,13 @@ async fn breathe(params: BreathSessionParams) {
     });
     while interval.next().await.is_some() {
         session.inc();
-        total.inc(1);
         if session.is_state_changed() {
             pb.set_message(&session.get_phase_str());
             pb.reset();
         } else {
             pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
         }
+        total.inc(1);
         if session.is_completed() {
             break;
         }
