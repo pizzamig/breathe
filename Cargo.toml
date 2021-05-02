@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 async-std = { version = "1", features = [ "attributes", "unstable" ] }
 strum = { version = "0.20", features = ["derive"] }
-indicatif = "0.15"
+indicatif = "0.16"
 dialoguer = "0.7"
 structopt = "0.3"
 structopt-flags = "0.3"
