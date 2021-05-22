@@ -106,6 +106,9 @@ struct Opt {
     /// list all available breathe patterns
     #[structopt(short, long)]
     list: bool,
+    /// specify a different duartion in the form of durationType=nn
+    #[structopt(short = "d",long, parse(try_from_str = config::parse_pattern_duration))]
+    pattern_duration: Option<config::PatternDuration>,
 }
 
 use structopt_flags::GetWithDefault;
@@ -122,10 +125,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             config.print_pattern_list();
             return Ok(());
         } else if let Some(pattern) = config.get_pattern(&opt.pattern) {
+            let pattern_duration = match opt.pattern_duration {
+                Some(pd) => pd,
+                None => config::PatternDuration {
+                    counter_type: pattern.counter_type.unwrap_or(config.counter_type),
+                    duration: pattern.duration.unwrap_or(config.duration),
+                },
+            };
             let session = BreathSessionParams {
                 pattern: pattern.clone(),
-                session_type: pattern.counter_type.unwrap_or(config.counter_type),
-                duration: pattern.duration.unwrap_or(config.duration),
+                session_type: pattern_duration.counter_type,
+                duration: pattern_duration.duration,
             };
             breathe(session).await;
         } else {
