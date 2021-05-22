@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 - crates: update dialoguer to 0.8
+- duration: add an option to specify a different duration of the exercise
 
 ## [0.2.2] 2021-02-12
 ### Fixed
