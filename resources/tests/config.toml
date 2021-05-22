@@ -12,7 +12,7 @@ duration = 8
 description = "This breathing exercise is a natural tranquilizer for the nervous system. The 8 configuration pattern is not suggested for beginners."
 
 [patterns.relax_short]
-breath_in = 4
+ breath_in = 4
 breath_out = 8
 hold_in = 7
 counter_type = "Iteration"
@@ -50,3 +50,12 @@ breath_out = 7
 counter_type = "Time"
 duration = 300
 description = "Ujjayi has a balancing influence on the entire cardiorespiratory stystem, releases feelings of irritation and frustration, and help calm the mind and body."
+
+[patterns.long_and_deep]
+breath_in = 8
+hold_in = 7
+breath_out = 8
+hold_out = 7
+counter_type = "Time"
+duration = 300
+description = "It's a custom pattern, very long and deep breath. Inspired by Pranayama, it allows to slow down the natural breathing pace."
