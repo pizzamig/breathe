@@ -15,10 +15,7 @@ pub(crate) struct Config {
 
 impl Config {
     pub(crate) fn get_pattern(&self, pattern_name: &str) -> Option<Pattern> {
-        match self.patterns.get(pattern_name) {
-            None => None,
-            Some(p) => Some(p.clone()),
-        }
+        self.patterns.get(pattern_name).cloned()
     }
     pub(crate) fn print_pattern_list(&self) {
         self.patterns.iter().for_each(|(name, pattern)| {
