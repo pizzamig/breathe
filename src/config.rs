@@ -67,9 +67,11 @@ impl Pattern {
 }
 #[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq, Copy)]
 pub(crate) enum CounterType {
+    #[strum(serialize = "time", serialize = "Time")]
     Time,
     #[strum(
         serialize = "iteration",
+        serialize = "iterations",
         serialize = "Iteration",
         serialize = "Iterations"
     )]
@@ -90,6 +92,32 @@ pub(crate) fn get_config(config_file: &std::path::Path) -> Option<Config> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct PatternDuration {
+    pub(crate) counter_type: CounterType,
+    pub(crate) duration: u64,
+}
+
+use std::str::FromStr;
+pub(crate) fn parse_pattern_duration(src: &str) -> Result<PatternDuration, String> {
+    let v: Vec<&str> = src.trim().split('=').collect();
+    if v.len() != 2 {
+        return Err(format!("Invalid duration: no '=' found in {}", src));
+    }
+    if let Ok(counter_type) = CounterType::from_str(v.get(0).unwrap()) {
+        if let Ok(duration) = u64::from_str(v.get(1).unwrap()) {
+            Ok(PatternDuration {
+                counter_type,
+                duration,
+            })
+        } else {
+            Err(format!("Invalid duration in {}", src))
+        }
+    } else {
+        Err(format!("Invalid counter type in {}", src))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -106,5 +134,30 @@ mod test {
         let input = include_bytes!("../resources/tests/config.toml");
         let got = toml::from_slice::<Config>(input);
         assert!(got.is_ok());
+    }
+
+    #[test]
+    fn pattern_duration_parsing() {
+        let input = "iterations=5";
+        let uut = parse_pattern_duration(input);
+        assert!(uut.is_ok());
+        let uut = uut.unwrap();
+        assert_eq!(uut.counter_type, CounterType::Iteration);
+        assert_eq!(uut.duration, 5);
+
+        let input = "Time=300";
+        let uut = parse_pattern_duration(input);
+        assert!(uut.is_ok());
+        let uut = uut.unwrap();
+        assert_eq!(uut.counter_type, CounterType::Time);
+        assert_eq!(uut.duration, 300);
+
+        let input = " Time=300 ";
+        let uut = parse_pattern_duration(input);
+        assert!(uut.is_ok());
+
+        let input = "seconds=300";
+        let uut = parse_pattern_duration(input);
+        assert!(uut.is_err());
     }
 }
