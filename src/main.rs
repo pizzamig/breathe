@@ -65,7 +65,7 @@ async fn breathe(params: BreathSessionParams) {
             .progress_chars("=>-")
             .tick_chars(r#"-\|/ "#),
     );
-    pb.set_message(&session.get_phase_str());
+    pb.set_message(session.get_phase_str());
     let total = multibar.add(indicatif::ProgressBar::new(session.get_session_length()));
     total.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -78,7 +78,7 @@ async fn breathe(params: BreathSessionParams) {
     while interval.next().await.is_some() {
         session.inc();
         if session.is_state_changed() {
-            pb.set_message(&session.get_phase_str());
+            pb.set_message(session.get_phase_str());
             pb.reset();
         } else {
             pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
