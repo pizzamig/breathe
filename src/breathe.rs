@@ -1,8 +1,8 @@
 use crate::config::{CounterType, Pattern};
 use std::collections::HashMap;
-use strum::Display;
+use strum::{Display, EnumIter, EnumVariantNames, IntoEnumIterator, VariantNames};
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Display)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, EnumVariantNames, EnumIter)]
 pub(crate) enum BreathPhase {
     BreathIn,
     HoldIn,
@@ -89,8 +89,16 @@ impl BreathingSession {
     pub(crate) fn get_session_length(&self) -> u64 {
         self.session_length
     }
-    pub(crate) fn get_phase_str(&self) -> String {
+    pub(crate) fn _get_phase_string(&self) -> String {
         self.current_state.to_string()
+    }
+    pub(crate) fn get_phase_str(&self) -> &'static str {
+        let index = BreathPhase::iter()
+            .enumerate()
+            .find(|(_, state)| state == &self.current_state)
+            .map(|(i, _)| i)
+            .unwrap();
+        BreathPhase::VARIANTS[index]
     }
     pub(crate) fn get_lengths_lcm(&self) -> u64 {
         self.cycle.get_lengths_lcm()
