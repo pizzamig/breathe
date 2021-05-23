@@ -1,4 +1,4 @@
-VERSION:=	0.2.2
+VERSION:=	0.2.3
 build:
 	docker build -t pizzamig/breathe:${VERSION} -t pizzamig/breathe:latest .
 
