@@ -18,7 +18,10 @@ impl Config {
         self.patterns.get(pattern_name).cloned()
     }
     pub(crate) fn print_pattern_list(&self) {
-        self.patterns.iter().for_each(|(name, pattern)| {
+        let mut sorted_keys: Vec<&String> = self.patterns.keys().collect();
+        sorted_keys.sort();
+        sorted_keys.iter().for_each(|name| {
+            let pattern = self.patterns.get(*name).unwrap();
             println!(
                 "{} [{}] [{}]: {}",
                 name,
