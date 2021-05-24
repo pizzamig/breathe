@@ -1,4 +1,4 @@
-FROM rust:slim-buster as builder
+FROM rust:buster as builder
 
 # trick to cache dependencies
 WORKDIR /usr/src
@@ -10,7 +10,7 @@ RUN cargo build --release
 # copy the source and build
 COPY src ./src
 COPY resources ./resources
-RUN cargo install --path .
+RUN touch src/main.rs && cargo install -vf --path .
 
 FROM debian:buster-slim as runtime
 RUN apt-get update \
