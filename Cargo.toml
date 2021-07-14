@@ -13,7 +13,7 @@ indicatif = "0.16"
 dialoguer = "0.8"
 structopt = "0.3"
 structopt-flags = "0.3"
-env_logger = "0.8"
+env_logger = "0.9"
 serde = { version = "1", features = ["derive"] }
 toml = { version = "0.5" }
 dirs = "3"
