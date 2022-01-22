@@ -22,5 +22,5 @@ RUN apt-get update \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/local/cargo/bin/breathe /usr/local/bin/breathe
-COPY --from=builder /usr/src/breathe/resources/tests/config.toml /root/.config/breathe.toml
+COPY resources/tests/config.toml /root/.config/breathe.toml
 ENTRYPOINT [ "/usr/bin/tini", "--", "breathe"]
