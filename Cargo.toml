@@ -1,6 +1,6 @@
 [package]
 name = "breathe"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Luca Pizzamiglio <pizzamig@FreeBSD.org>"]
 edition = "2018"
 
