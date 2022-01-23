@@ -12,12 +12,20 @@ duration = 8
 description = "This breathing exercise is a natural tranquilizer for the nervous system. The 8 configuration pattern is not suggested for beginners."
 
 [patterns.relax_short]
- breath_in = 4
+breath_in = 4
 breath_out = 8
 hold_in = 7
 counter_type = "Iteration"
 duration = 4
 description = "This breathing exercise is a natural tranquilizer for the nervous system. The 4 configuration pattern is suggested for beginners."
+
+[patterns.stress_away]
+breath_in = 6
+breath_out = 6
+hold_in = 3
+counter_type = "Iteration"
+duration = 5
+description = "This breathing exercise aims to reduce stress and anxiety."
 
 [patterns.four]
 breath_in = 4
