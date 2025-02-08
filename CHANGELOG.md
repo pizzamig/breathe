@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- ROADMAP: updated
+- Removed total progression bar (for now)
+- Removed async (useless complexity)
+- Update all crates
+- .gitignore: added *.swp files (vi backup)
+
+## [0.2.4]
 ### Added
 - pattern: Add new pattern 6-3-6 (Biohack your brain)
 
