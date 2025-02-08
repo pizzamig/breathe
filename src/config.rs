@@ -101,7 +101,7 @@ pub(crate) fn parse_pattern_duration(src: &str) -> Result<PatternDuration, Strin
     if v.len() != 2 {
         return Err(format!("Invalid duration: no '=' found in {}", src));
     }
-    if let Ok(counter_type) = CounterType::from_str(v.get(0).unwrap()) {
+    if let Ok(counter_type) = CounterType::from_str(v.first().unwrap()) {
         if let Ok(duration) = u64::from_str(v.get(1).unwrap()) {
             Ok(PatternDuration {
                 counter_type,
