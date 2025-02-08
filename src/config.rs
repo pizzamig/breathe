@@ -128,8 +128,8 @@ mod test {
     }
     #[test]
     fn deserialization() {
-        let input = include_bytes!("../resources/tests/config.toml");
-        let got = toml::from_slice::<Config>(input);
+        let input = include_str!("../resources/tests/config.toml");
+        let got = toml::from_str::<Config>(input);
         assert!(got.is_ok());
     }
 
