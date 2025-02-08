@@ -98,36 +98,51 @@ fn breathe(params: BreathSessionParams) {
     drop(guard);
 }
 
-use structopt::StructOpt;
-use structopt_flags::LogLevel;
+use clap::Parser;
+use std::path::PathBuf;
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "breathe", about = "A cli tool with breathing exercises")]
+#[derive(Debug, Parser)]
+#[command(name = "breathe", about = "A cli tool with breathing exercises")]
 struct Opt {
-    #[structopt(flatten)]
-    config_file: structopt_flags::ConfigFileNoDef,
-    #[structopt(flatten)]
-    verbose: structopt_flags::Verbose,
+    #[arg(
+        name = "config_file",
+        long = "config",
+        short = 'c',
+        default_value_os_t = config::get_default_config_file(),
+    )]
+    config_file: PathBuf,
+    #[arg(
+        name = "verbose",
+        long = "verboe",
+        short = 'v',
+        action = clap::ArgAction::Count,
+        global = true
+    )]
+    verbosity_level: u8,
     /// select the breathe pattern you want to practice
-    #[structopt(short, long, default_value = "relax")]
+    #[arg(short, long, default_value = "relax")]
     pattern: String,
     /// list all available breathe patterns
-    #[structopt(short, long)]
+    #[arg(short, long)]
     list: bool,
     /// specify a different duartion in the form of durationType=nn
-    #[structopt(short = "d",long, parse(try_from_str = config::parse_pattern_duration))]
+    #[arg(short = 'd',long, value_parser = config::parse_pattern_duration)]
     pattern_duration: Option<config::PatternDuration>,
 }
 
-use structopt_flags::GetWithDefault;
-
+fn get_level_filter(verbosity_level: u8) -> log::LevelFilter {
+    match verbosity_level {
+        0 => log::LevelFilter::Error,
+        1 => log::LevelFilter::Warn,
+        2 => log::LevelFilter::Info,
+        3 => log::LevelFilter::Debug,
+        _ => log::LevelFilter::Trace,
+    }
+}
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let opt = Opt::from_args();
-    env_logger::builder().filter_level(opt.verbose.get_level_filter());
-    let config_file = opt
-        .config_file
-        .get_with_default(config::get_default_config_file());
-    if let Some(config) = config::get_config(&config_file) {
+    let opt = Opt::parse();
+    env_logger::builder().filter_level(get_level_filter(opt.verbosity_level));
+    if let Some(config) = config::get_config(&opt.config_file) {
         if opt.list {
             config.print_pattern_list();
             return Ok(());
