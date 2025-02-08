@@ -1,8 +1,6 @@
 mod breathe;
 mod config;
 
-use async_std::prelude::*;
-
 struct BreathSessionParams {
     pattern: config::Pattern,
     session_type: config::CounterType,
@@ -40,9 +38,12 @@ Session type: {}
         )
     }
 }
-async fn breathe(params: BreathSessionParams) {
-    let mut interval = async_std::stream::interval(std::time::Duration::from_secs(1));
-    let mut session =
+
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn breathe(params: BreathSessionParams) {
+    let session =
         breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
 
     println!("{}", params);
@@ -57,37 +58,44 @@ async fn breathe(params: BreathSessionParams) {
     if !user_choice {
         return;
     }
-    let multibar = indicatif::MultiProgress::new();
-    let pb = multibar.add(indicatif::ProgressBar::new(session.get_lengths_lcm()));
+    let pb = indicatif::ProgressBar::new(session.get_lengths_lcm());
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
-            .template("{spinner:>4} {bar:80} {msg}")
             .progress_chars("=>-")
-            .tick_chars(r#"-\|/ "#),
+            .tick_chars(r#"-\|/ "#)
+            .template("{spinner:>4} {wide_bar} {msg}")
+            .unwrap(),
     );
     pb.set_message(session.get_phase_str());
-    let total = multibar.add(indicatif::ProgressBar::new(session.get_session_length()));
-    total.set_style(
-        indicatif::ProgressStyle::default_bar()
-            .template("{percent:>3}% {bar:80} {elapsed_precise}")
-            .progress_chars("=>-"),
-    );
-    async_std::task::spawn(async move {
-        multibar.join().unwrap_or_default();
-    });
-    while interval.next().await.is_some() {
-        session.inc();
-        if session.is_state_changed() {
-            pb.set_message(session.get_phase_str());
-            pb.reset();
-        } else {
-            pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
-        }
-        total.inc(1);
-        if session.is_completed() {
-            break;
+    let session = Arc::new(Mutex::new(session));
+    let timer = timer::Timer::new();
+    let guard = {
+        let session = session.clone();
+        timer.schedule_repeating(chrono::Duration::seconds(1), move || {
+            let mut session = session.lock().unwrap();
+            if !session.is_completed() {
+                session.inc();
+                if session.is_state_changed() {
+                    pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
+                    pb.set_message(session.get_phase_str());
+                    pb.dec(pb.position());
+                } else {
+                    pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
+                }
+            }
+        })
+    };
+    loop {
+        thread::sleep(std::time::Duration::new(0, 501));
+        {
+            let session = session.clone();
+            let session = session.lock().unwrap();
+            if session.is_completed() {
+                break;
+            }
         }
     }
+    drop(guard);
 }
 
 use structopt::StructOpt;
@@ -113,8 +121,7 @@ struct Opt {
 
 use structopt_flags::GetWithDefault;
 
-#[async_std::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
     env_logger::builder().filter_level(opt.verbose.get_level_filter());
     let config_file = opt
@@ -137,7 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 session_type: pattern_duration.counter_type,
                 duration: pattern_duration.duration,
             };
-            breathe(session).await;
+            breathe(session);
         } else {
             // TODO: implement proper error
             eprintln!("no patter found, damn");

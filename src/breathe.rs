@@ -86,6 +86,7 @@ impl BreathingSession {
     fn get_cycle_length(&self) -> u64 {
         self.cycle.cycle_length
     }
+    #[allow(dead_code)]
     pub(crate) fn get_session_length(&self) -> u64 {
         self.session_length
     }
