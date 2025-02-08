@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 strum = { version = "0.26", features = ["derive"] }
 indicatif = "0.17"
-dialoguer = "0.9"
+dialoguer = "0.11"
 structopt = "0.3"
 structopt-flags = "0.3"
 env_logger = "0.11"
