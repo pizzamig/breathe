@@ -10,8 +10,6 @@ edition = "2021"
 strum = { version = "0.26", features = ["derive"] }
 indicatif = "0.17"
 dialoguer = "0.11"
-structopt = "0.3"
-structopt-flags = "0.3"
 env_logger = "0.11"
 serde = { version = "1", features = ["derive"] }
 toml = { version = "0.8" }
@@ -19,3 +17,5 @@ dirs = "4"
 num-integer = "0.1"
 timer = "0.2.0"
 chrono = "0.4.39"
+clap = { version = "4.5.28", features = ["derive"] }
+log = "0.4.25"

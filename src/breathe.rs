@@ -1,8 +1,8 @@
 use crate::config::{CounterType, Pattern};
 use std::collections::HashMap;
-use strum::{Display, EnumIter, EnumVariantNames, IntoEnumIterator, VariantNames};
+use strum::{Display, EnumIter, IntoEnumIterator, VariantNames};
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, EnumVariantNames, EnumIter)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, VariantNames, EnumIter)]
 pub(crate) enum BreathPhase {
     BreathIn,
     HoldIn,
