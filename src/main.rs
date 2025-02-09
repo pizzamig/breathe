@@ -139,34 +139,27 @@ fn get_level_filter(verbosity_level: u8) -> log::LevelFilter {
         _ => log::LevelFilter::Trace,
     }
 }
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
     env_logger::builder().filter_level(get_level_filter(opt.verbosity_level));
-    if let Some(config) = config::get_config(&opt.config_file) {
-        if opt.list {
-            config.print_pattern_list();
-            return Ok(());
-        } else if let Some(pattern) = config.get_pattern(&opt.pattern) {
-            let pattern_duration = match opt.pattern_duration {
-                Some(pd) => pd,
-                None => config::PatternDuration {
-                    counter_type: pattern.counter_type.unwrap_or(config.counter_type),
-                    duration: pattern.duration.unwrap_or(config.duration),
-                },
-            };
-            let session = BreathSessionParams {
-                pattern: pattern.clone(),
-                session_type: pattern_duration.counter_type,
-                duration: pattern_duration.duration,
-            };
-            breathe(session);
-        } else {
-            // TODO: implement proper error
-            eprintln!("no patter found, damn");
-        }
-    } else {
-        // TODO: implement proper error
-        eprintln!("no config file found, damn");
+    let config = config::from_file(&opt.config_file)?;
+    if opt.list {
+        config.print_pattern_list();
+        return Ok(());
     }
+    let pattern = config.retrieve_pattern(&opt.pattern)?;
+    let pattern_duration = match opt.pattern_duration {
+        Some(pd) => pd,
+        None => config::PatternDuration {
+            counter_type: pattern.counter_type.unwrap_or(config.counter_type),
+            duration: pattern.duration.unwrap_or(config.duration),
+        },
+    };
+    let session = BreathSessionParams {
+        pattern: pattern.clone(),
+        session_type: pattern_duration.counter_type,
+        duration: pattern_duration.duration,
+    };
+    breathe(session);
     Ok(())
 }

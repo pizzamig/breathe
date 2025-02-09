@@ -21,6 +21,7 @@ impl BreathPhase {
         }
     }
 }
+
 #[derive(Debug, Clone)]
 pub(crate) struct BreathCycle {
     cycle: HashMap<BreathPhase, u64>,

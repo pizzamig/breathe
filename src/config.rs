@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Context};
 use serde::Deserialize;
 use std::collections::HashMap;
 use strum::{Display, EnumString};
@@ -6,6 +7,10 @@ const _GLOBAL_CONFIG_DIR_1: &str = "/etc";
 const _GLOBAL_CONFIG_DIR_2: &str = "/usr/local/etc";
 const CONFIG_DEFAULT_NAME: &str = "breathe.toml";
 
+pub(crate) fn get_default_config_file() -> std::path::PathBuf {
+    dirs::config_dir().unwrap().join(CONFIG_DEFAULT_NAME)
+}
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct Config {
     patterns: HashMap<String, Pattern>,
@@ -13,7 +18,30 @@ pub(crate) struct Config {
     pub(crate) duration: u64,
 }
 
+pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config> {
+    if config_file.exists() && config_file.is_file() {
+        let temp_str = std::fs::read_to_string(config_file)
+            .with_context(|| format!("Failed to read config from {}", config_file.display()))?;
+        let conf: Config = toml::from_str(&temp_str)
+            .with_context(|| format!("Invalid configuration in {}", config_file.display()))?;
+        Ok(conf)
+    } else {
+        Err(anyhow!(
+            "File {} doesn't exist or is not readable",
+            config_file.display()
+        ))
+    }
+}
+
 impl Config {
+    pub(crate) fn retrieve_pattern(&self, pattern_name: &str) -> anyhow::Result<Pattern> {
+        if self.patterns.contains_key(pattern_name) {
+            Ok(self.patterns.get(pattern_name).unwrap().clone())
+        } else {
+            Err(anyhow!("Pattern {pattern_name} not found"))
+        }
+    }
+
     pub(crate) fn get_pattern(&self, pattern_name: &str) -> Option<Pattern> {
         self.patterns.get(pattern_name).cloned()
     }
@@ -75,20 +103,6 @@ pub(crate) enum CounterType {
     Iteration,
 }
 
-pub(crate) fn get_default_config_file() -> std::path::PathBuf {
-    dirs::config_dir().unwrap().join(CONFIG_DEFAULT_NAME)
-}
-
-pub(crate) fn get_config(config_file: &std::path::Path) -> Option<Config> {
-    if config_file.exists() && config_file.is_file() {
-        let temp_str = std::fs::read_to_string(config_file).unwrap();
-        let g1: Config = toml::from_str(&temp_str).unwrap();
-        Some(g1)
-    } else {
-        None
-    }
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct PatternDuration {
     pub(crate) counter_type: CounterType,
@@ -118,7 +132,26 @@ pub(crate) fn parse_pattern_duration(src: &str) -> Result<PatternDuration, Strin
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::path::Path;
 
+    #[test]
+    fn config_from_file_success() {
+        let result = from_file(Path::new("resources/tests/config.toml"));
+        assert!(result.is_ok());
+        let config = result.unwrap();
+        assert!(config.patterns.contains_key("relax"))
+    }
+
+    #[test]
+    fn config_from_file_failures() {
+        let result = from_file(Path::new(""));
+        assert!(result.is_err());
+        let result = from_file(Path::new("resources/tests/notoml.toml"));
+        assert!(result.is_err());
+        let result = from_file(Path::new("resources/tests/noconfig.toml"));
+        assert!(result.is_err());
+    }
+    //pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config> {
     #[test]
     fn counter_type_deserialization() {
         let uut = CounterType::Iteration;
