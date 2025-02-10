@@ -1,13 +1,13 @@
 mod breathe;
 mod config;
 
-struct BreathSessionParams {
-    pattern: config::Pattern,
+struct BreathSessionParams<'a> {
+    pattern: &'a config::Pattern,
     session_type: config::CounterType,
     duration: u64,
 }
 
-impl std::fmt::Display for BreathSessionParams {
+impl std::fmt::Display for BreathSessionParams<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let duration = match self.session_type {
             config::CounterType::Time => "Duration:  ",
@@ -44,7 +44,7 @@ use std::thread;
 
 fn breathe(params: BreathSessionParams) {
     let session =
-        breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
+        breathe::BreathingSession::new(params.pattern, params.session_type, params.duration);
 
     println!("{}", params);
     if let config::CounterType::Iteration = params.session_type {
@@ -66,7 +66,7 @@ fn breathe(params: BreathSessionParams) {
             .template("{spinner:>4} {wide_bar} {msg}")
             .unwrap(),
     );
-    pb.set_message(session.get_phase_str());
+    pb.set_message(session.phase_as_str());
     let session = Arc::new(Mutex::new(session));
     let timer = timer::Timer::new();
     let guard = {
@@ -77,7 +77,7 @@ fn breathe(params: BreathSessionParams) {
                 session.inc();
                 if session.is_state_changed() {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
-                    pb.set_message(session.get_phase_str());
+                    pb.set_message(session.phase_as_str());
                     pb.dec(pb.position());
                 } else {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
@@ -126,7 +126,7 @@ struct Opt {
     #[arg(short, long)]
     list: bool,
     /// specify a different duartion in the form of durationType=nn
-    #[arg(short = 'd',long, value_parser = config::parse_pattern_duration)]
+    #[arg(short = 'd', long)]
     pattern_duration: Option<config::PatternDuration>,
 }
 
@@ -139,34 +139,24 @@ fn get_level_filter(verbosity_level: u8) -> log::LevelFilter {
         _ => log::LevelFilter::Trace,
     }
 }
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
     env_logger::builder().filter_level(get_level_filter(opt.verbosity_level));
-    if let Some(config) = config::get_config(&opt.config_file) {
-        if opt.list {
-            config.print_pattern_list();
-            return Ok(());
-        } else if let Some(pattern) = config.get_pattern(&opt.pattern) {
-            let pattern_duration = match opt.pattern_duration {
-                Some(pd) => pd,
-                None => config::PatternDuration {
-                    counter_type: pattern.counter_type.unwrap_or(config.counter_type),
-                    duration: pattern.duration.unwrap_or(config.duration),
-                },
-            };
-            let session = BreathSessionParams {
-                pattern: pattern.clone(),
-                session_type: pattern_duration.counter_type,
-                duration: pattern_duration.duration,
-            };
-            breathe(session);
-        } else {
-            // TODO: implement proper error
-            eprintln!("no patter found, damn");
-        }
-    } else {
-        // TODO: implement proper error
-        eprintln!("no config file found, damn");
+    let config = config::from_file(&opt.config_file)?;
+    if opt.list {
+        config.print_pattern_list();
+        return Ok(());
     }
+    let pattern = config.get_pattern(&opt.pattern)?;
+    let pattern_duration = match opt.pattern_duration {
+        Some(pd) => pd,
+        None => pattern.pattern_duration.unwrap_or(config.pattern_duration),
+    };
+    let session = BreathSessionParams {
+        pattern,
+        session_type: pattern_duration.counter_type,
+        duration: pattern_duration.duration,
+    };
+    breathe(session);
     Ok(())
 }

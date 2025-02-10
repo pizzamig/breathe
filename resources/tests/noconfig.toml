@@ -1,0 +1,12 @@
+no_counter_type= "Time"
+no_duration = 300
+
+[no_patterns]
+
+[no_patterns.relax]
+no_breath_in = 4
+no_breath_out = 8
+no_hold_in = 7
+no_counter_type = "Iteration"
+no_duration = 8
+no_description = "This breathing exercise is a natural tranquilizer for the nervous system. The 8 configuration pattern is not suggested for beginners."
