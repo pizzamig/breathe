@@ -26,31 +26,26 @@ impl BreathPhase {
 pub(crate) struct BreathCycle {
     cycle: HashMap<BreathPhase, u64>,
     pub(crate) cycle_length: u64,
+    pub(crate) lcm: u64,
 }
 
-impl From<&Pattern> for BreathCycle {
-    fn from(pattern: &Pattern) -> Self {
-        let mut cycle = HashMap::new();
-        cycle.insert(BreathPhase::BreathIn, pattern.breath_in);
-        cycle.insert(BreathPhase::BreathOut, pattern.breath_out);
-        cycle.insert(BreathPhase::HoldIn, pattern.hold_in.unwrap_or(0));
-        cycle.insert(BreathPhase::HoldOut, pattern.hold_out.unwrap_or(0));
-        BreathCycle {
-            cycle,
-            cycle_length: pattern.breath_in
-                + pattern.breath_out
-                + pattern.hold_in.unwrap_or(0)
-                + pattern.hold_out.unwrap_or(0),
-        }
-    }
-}
-
-impl BreathCycle {
-    fn get_lengths_lcm(&self) -> u64 {
-        self.cycle
-            .values()
-            .filter(|&&x| x != 0)
-            .fold(1, |lcm, &x| num_integer::lcm(lcm, x))
+fn from_pattern(pattern: &Pattern) -> BreathCycle {
+    let mut cycle = HashMap::new();
+    cycle.insert(BreathPhase::BreathIn, pattern.breath_in);
+    cycle.insert(BreathPhase::BreathOut, pattern.breath_out);
+    cycle.insert(BreathPhase::HoldIn, pattern.hold_in.unwrap_or(0));
+    cycle.insert(BreathPhase::HoldOut, pattern.hold_out.unwrap_or(0));
+    let lcm = cycle
+        .values()
+        .filter(|&&x| x != 0)
+        .fold(1, |lcm, &x| num_integer::lcm(lcm, x));
+    BreathCycle {
+        cycle,
+        cycle_length: pattern.breath_in
+            + pattern.breath_out
+            + pattern.hold_in.unwrap_or(0)
+            + pattern.hold_out.unwrap_or(0),
+        lcm,
     }
 }
 
@@ -66,7 +61,7 @@ pub(crate) struct BreathingSession {
 
 impl BreathingSession {
     pub(crate) fn new(pattern: &Pattern, counter_type: CounterType, duration: u64) -> Self {
-        let cycle: BreathCycle = pattern.into();
+        let cycle: BreathCycle = from_pattern(pattern);
         let session_length = match counter_type {
             CounterType::Iteration => cycle.cycle_length * duration,
             CounterType::Time => duration,
@@ -103,7 +98,7 @@ impl BreathingSession {
         BreathPhase::VARIANTS[index]
     }
     pub(crate) fn get_lengths_lcm(&self) -> u64 {
-        self.cycle.get_lengths_lcm()
+        self.cycle.lcm
     }
     fn next_state(&mut self) {
         let mut temp_state = self.current_state.next();
@@ -160,7 +155,7 @@ mod test {
             duration: None,
             description: "Test pattern".to_string(),
         };
-        let got: BreathCycle = (&uut).into();
+        let got: BreathCycle = from_pattern(&uut);
         assert_eq!(got.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
         assert_eq!(got.cycle.get(&BreathPhase::HoldIn).unwrap(), &7);
         assert_eq!(got.cycle.get(&BreathPhase::BreathOut).unwrap(), &8);
@@ -179,8 +174,8 @@ mod test {
             duration: None,
             description: "Test pattern".to_string(),
         };
-        let got: BreathCycle = (&uut).into();
-        assert_eq!(got.get_lengths_lcm(), 56);
+        let got: BreathCycle = from_pattern(&uut);
+        assert_eq!(got.lcm, 56);
     }
     #[test]
     fn breath_session_ctor_time_session() {
