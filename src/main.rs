@@ -1,13 +1,13 @@
 mod breathe;
 mod config;
 
-struct BreathSessionParams {
-    pattern: config::Pattern,
+struct BreathSessionParams<'a> {
+    pattern: &'a config::Pattern,
     session_type: config::CounterType,
     duration: u64,
 }
 
-impl std::fmt::Display for BreathSessionParams {
+impl std::fmt::Display for BreathSessionParams<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let duration = match self.session_type {
             config::CounterType::Time => "Duration:  ",
@@ -44,7 +44,7 @@ use std::thread;
 
 fn breathe(params: BreathSessionParams) {
     let session =
-        breathe::BreathingSession::new(&params.pattern, params.session_type, params.duration);
+        breathe::BreathingSession::new(params.pattern, params.session_type, params.duration);
 
     println!("{}", params);
     if let config::CounterType::Iteration = params.session_type {
@@ -147,7 +147,7 @@ fn main() -> anyhow::Result<()> {
         config.print_pattern_list();
         return Ok(());
     }
-    let pattern = config.retrieve_pattern(&opt.pattern)?;
+    let pattern = config.get_pattern(&opt.pattern)?;
     let pattern_duration = match opt.pattern_duration {
         Some(pd) => pd,
         None => config::PatternDuration {
@@ -156,7 +156,7 @@ fn main() -> anyhow::Result<()> {
         },
     };
     let session = BreathSessionParams {
-        pattern: pattern.clone(),
+        pattern,
         session_type: pattern_duration.counter_type,
         duration: pattern_duration.duration,
     };
