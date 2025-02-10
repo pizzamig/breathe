@@ -66,7 +66,7 @@ fn breathe(params: BreathSessionParams) {
             .template("{spinner:>4} {wide_bar} {msg}")
             .unwrap(),
     );
-    pb.set_message(session.get_phase_str());
+    pb.set_message(session.phase_as_str());
     let session = Arc::new(Mutex::new(session));
     let timer = timer::Timer::new();
     let guard = {
@@ -77,7 +77,7 @@ fn breathe(params: BreathSessionParams) {
                 session.inc();
                 if session.is_state_changed() {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
-                    pb.set_message(session.get_phase_str());
+                    pb.set_message(session.phase_as_str());
                     pb.dec(pb.position());
                 } else {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());

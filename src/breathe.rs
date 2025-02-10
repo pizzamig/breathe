@@ -1,8 +1,10 @@
 use crate::config::{CounterType, Pattern};
 use std::collections::HashMap;
-use strum::{Display, EnumIter, IntoEnumIterator, VariantNames};
+use strum::{Display, IntoStaticStr};
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, VariantNames, EnumIter)]
+/// Breathing can be in 4 possible phases.
+/// This struct represent those 4 possible values
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, IntoStaticStr)]
 pub(crate) enum BreathPhase {
     BreathIn,
     HoldIn,
@@ -12,6 +14,7 @@ pub(crate) enum BreathPhase {
 impl Eq for BreathPhase {}
 
 impl BreathPhase {
+    // Breath phases are ordered. This function returns the next breathing phase
     fn next(self) -> Self {
         match self {
             BreathPhase::BreathIn => BreathPhase::HoldIn,
@@ -54,7 +57,7 @@ pub(crate) struct BreathingSession {
     cycle: BreathCycle,
     session_length: u64,
     total_counter: u64,
-    current_state: BreathPhase,
+    pub(crate) current_state: BreathPhase,
     state_counter: u64,
     state_changed: bool,
 }
@@ -75,31 +78,19 @@ impl BreathingSession {
             state_changed: true,
         }
     }
+
     pub(crate) fn get_current_phase_length(&self) -> u64 {
         *self.cycle.cycle.get(&self.current_state).unwrap()
     }
-    #[allow(dead_code)]
-    fn get_cycle_length(&self) -> u64 {
-        self.cycle.cycle_length
+
+    pub(crate) fn phase_as_str(&self) -> &'static str {
+        self.current_state.into()
     }
-    #[allow(dead_code)]
-    pub(crate) fn get_session_length(&self) -> u64 {
-        self.session_length
-    }
-    pub(crate) fn _get_phase_string(&self) -> String {
-        self.current_state.to_string()
-    }
-    pub(crate) fn get_phase_str(&self) -> &'static str {
-        let index = BreathPhase::iter()
-            .enumerate()
-            .find(|(_, state)| state == &self.current_state)
-            .map(|(i, _)| i)
-            .unwrap();
-        BreathPhase::VARIANTS[index]
-    }
+
     pub(crate) fn get_lengths_lcm(&self) -> u64 {
         self.cycle.lcm
     }
+
     fn next_state(&mut self) {
         let mut temp_state = self.current_state.next();
         while self.cycle.cycle.get(&temp_state).unwrap() == &0 {
@@ -193,8 +184,6 @@ mod test {
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldIn).unwrap(), &7);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathOut).unwrap(), &8);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldOut).unwrap(), &0);
-        assert_eq!(got.get_cycle_length(), 19);
-        assert_eq!(got.get_session_length(), 60);
     }
 
     #[test]
@@ -213,8 +202,6 @@ mod test {
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldIn).unwrap(), &7);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathOut).unwrap(), &8);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldOut).unwrap(), &0);
-        assert_eq!(got.get_cycle_length(), 19);
-        assert_eq!(got.get_session_length(), 152);
     }
 
     #[test]
