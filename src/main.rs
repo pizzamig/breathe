@@ -126,7 +126,7 @@ struct Opt {
     #[arg(short, long)]
     list: bool,
     /// specify a different duartion in the form of durationType=nn
-    #[arg(short = 'd',long, value_parser = config::parse_pattern_duration)]
+    #[arg(short = 'd', long)]
     pattern_duration: Option<config::PatternDuration>,
 }
 

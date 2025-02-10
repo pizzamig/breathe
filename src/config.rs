@@ -108,22 +108,23 @@ pub(crate) struct PatternDuration {
 }
 
 use std::str::FromStr;
-pub(crate) fn parse_pattern_duration(src: &str) -> Result<PatternDuration, String> {
-    let v: Vec<&str> = src.trim().split('=').collect();
-    if v.len() != 2 {
-        return Err(format!("Invalid duration: no '=' found in {}", src));
-    }
-    if let Ok(counter_type) = CounterType::from_str(v.first().unwrap()) {
-        if let Ok(duration) = u64::from_str(v.get(1).unwrap()) {
-            Ok(PatternDuration {
-                counter_type,
-                duration,
-            })
-        } else {
-            Err(format!("Invalid duration in {}", src))
+
+impl FromStr for PatternDuration {
+    type Err = anyhow::Error;
+
+    fn from_str(src: &str) -> anyhow::Result<PatternDuration> {
+        let v: Vec<&str> = src.trim().split('=').collect();
+        if v.len() != 2 {
+            return Err(anyhow!("Invalid duration: no '=' found in {}", src));
         }
-    } else {
-        Err(format!("Invalid counter type in {}", src))
+        let counter_type = CounterType::from_str(v.first().unwrap())
+            .with_context(|| format!("Invalid counter type {}", v.first().unwrap()))?;
+        let duration = u64::from_str(v.get(1).unwrap())
+            .with_context(|| format!("Invalid duration {}", v.get(1).unwrap()))?;
+        Ok(PatternDuration {
+            counter_type,
+            duration,
+        })
     }
 }
 
@@ -185,25 +186,25 @@ mod test {
     #[test]
     fn pattern_duration_parsing() {
         let input = "iterations=5";
-        let uut = parse_pattern_duration(input);
+        let uut = PatternDuration::from_str(input);
         assert!(uut.is_ok());
         let uut = uut.unwrap();
         assert_eq!(uut.counter_type, CounterType::Iteration);
         assert_eq!(uut.duration, 5);
 
         let input = "Time=300";
-        let uut = parse_pattern_duration(input);
+        let uut = PatternDuration::from_str(input);
         assert!(uut.is_ok());
         let uut = uut.unwrap();
         assert_eq!(uut.counter_type, CounterType::Time);
         assert_eq!(uut.duration, 300);
 
         let input = " Time=300 ";
-        let uut = parse_pattern_duration(input);
+        let uut = PatternDuration::from_str(input);
         assert!(uut.is_ok());
 
         let input = "seconds=300";
-        let uut = parse_pattern_duration(input);
+        let uut = PatternDuration::from_str(input);
         assert!(uut.is_err());
     }
 }
