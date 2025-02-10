@@ -14,8 +14,8 @@ pub(crate) fn get_default_config_file() -> std::path::PathBuf {
 #[derive(Debug, Deserialize)]
 pub(crate) struct Config {
     patterns: HashMap<String, Pattern>,
-    pub(crate) counter_type: CounterType,
-    pub(crate) duration: u64,
+    #[serde(flatten)]
+    pub(crate) pattern_duration: PatternDuration,
 }
 
 pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config> {

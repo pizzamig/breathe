@@ -150,10 +150,7 @@ fn main() -> anyhow::Result<()> {
     let pattern = config.get_pattern(&opt.pattern)?;
     let pattern_duration = match opt.pattern_duration {
         Some(pd) => pd,
-        None => pattern.pattern_duration.unwrap_or(config::PatternDuration {
-            counter_type: config.counter_type,
-            duration: config.duration,
-        }),
+        None => pattern.pattern_duration.unwrap_or(config.pattern_duration),
     };
     let session = BreathSessionParams {
         pattern,
