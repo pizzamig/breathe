@@ -142,8 +142,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            counter_type: None,
-            duration: None,
+            pattern_duration: None,
             description: "Test pattern".to_string(),
         };
         let got: BreathCycle = from_pattern(&uut);
@@ -161,8 +160,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            counter_type: None,
-            duration: None,
+            pattern_duration: None,
             description: "Test pattern".to_string(),
         };
         let got: BreathCycle = from_pattern(&uut);
@@ -175,8 +173,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            counter_type: None,
-            duration: None,
+            pattern_duration: None,
             description: "Test pattern".to_string(),
         };
         let got = BreathingSession::new(&p, CounterType::Time, 60);
@@ -193,8 +190,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            counter_type: None,
-            duration: None,
+            pattern_duration: None,
             description: "Test pattern".to_string(),
         };
         let got = BreathingSession::new(&p, CounterType::Iteration, 8);
@@ -211,8 +207,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            counter_type: None,
-            duration: None,
+            pattern_duration: None,
             description: "Test pattern".to_string(),
         };
         let mut got = BreathingSession::new(&p, CounterType::Iteration, 2);

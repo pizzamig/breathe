@@ -61,8 +61,8 @@ pub(crate) struct Pattern {
     pub(crate) hold_in: Option<u64>,
     pub(crate) breath_out: u64,
     pub(crate) hold_out: Option<u64>,
-    pub(crate) counter_type: Option<CounterType>,
-    pub(crate) duration: Option<u64>,
+    #[serde(flatten)]
+    pub(crate) pattern_duration: Option<PatternDuration>,
     pub(crate) description: String,
 }
 
@@ -77,13 +77,13 @@ impl Pattern {
         )
     }
     fn get_short_session_string(&self) -> String {
-        if self.counter_type.is_none() || self.duration.is_none() {
-            "".to_string()
-        } else {
-            match self.counter_type.unwrap() {
-                CounterType::Time => format!("{} seconds", self.duration.unwrap()),
-                CounterType::Iteration => format!("{} iterations", self.duration.unwrap()),
+        if let Some(pattern_duration) = self.pattern_duration {
+            match pattern_duration.counter_type {
+                CounterType::Time => format!("{} seconds", pattern_duration.duration),
+                CounterType::Iteration => format!("{} iterations", pattern_duration.duration),
             }
+        } else {
+            "".to_string()
         }
     }
 }
@@ -101,7 +101,7 @@ pub(crate) enum CounterType {
     Iteration,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone, Deserialize)]
 pub(crate) struct PatternDuration {
     pub(crate) counter_type: CounterType,
     pub(crate) duration: u64,
@@ -165,8 +165,10 @@ mod test {
         assert_eq!(pattern.breath_out, 8);
         assert_eq!(pattern.hold_in, Some(7));
         assert_eq!(pattern.hold_out, None);
-        assert_eq!(pattern.counter_type, Some(CounterType::Iteration));
-        assert_eq!(pattern.duration, Some(8));
+        assert!(pattern.pattern_duration.is_some());
+        let pd = pattern.pattern_duration.unwrap();
+        assert_eq!(pd.counter_type, CounterType::Iteration);
+        assert_eq!(pd.duration, 8);
     }
 
     #[test]
