@@ -34,17 +34,14 @@ pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config>
 }
 
 impl Config {
-    pub(crate) fn retrieve_pattern(&self, pattern_name: &str) -> anyhow::Result<Pattern> {
+    pub(crate) fn get_pattern(&self, pattern_name: &str) -> anyhow::Result<&Pattern> {
         if self.patterns.contains_key(pattern_name) {
-            Ok(self.patterns.get(pattern_name).unwrap().clone())
+            Ok(self.patterns.get(pattern_name).unwrap())
         } else {
             Err(anyhow!("Pattern {pattern_name} not found"))
         }
     }
 
-    pub(crate) fn get_pattern(&self, pattern_name: &str) -> Option<Pattern> {
-        self.patterns.get(pattern_name).cloned()
-    }
     pub(crate) fn print_pattern_list(&self) {
         self.patterns.iter().for_each(|(name, pattern)| {
             println!(
@@ -90,6 +87,7 @@ impl Pattern {
         }
     }
 }
+
 #[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq, Copy)]
 pub(crate) enum CounterType {
     #[strum(serialize = "time", serialize = "Time")]
@@ -134,11 +132,15 @@ mod test {
     use super::*;
     use std::path::Path;
 
-    #[test]
-    fn config_from_file_success() {
+    fn get_standard_config() -> Config {
         let result = from_file(Path::new("resources/tests/config.toml"));
         assert!(result.is_ok());
-        let config = result.unwrap();
+        result.unwrap()
+    }
+
+    #[test]
+    fn config_from_file_success() {
+        let config = get_standard_config();
         assert!(config.patterns.contains_key("relax"))
     }
 
@@ -151,7 +153,21 @@ mod test {
         let result = from_file(Path::new("resources/tests/noconfig.toml"));
         assert!(result.is_err());
     }
-    //pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config> {
+
+    #[test]
+    fn get_patterns() {
+        let config = get_standard_config();
+        let pattern = config.get_pattern("relax");
+        assert!(pattern.is_ok());
+        let pattern = pattern.unwrap();
+        assert_eq!(pattern.breath_in, 4);
+        assert_eq!(pattern.breath_out, 8);
+        assert_eq!(pattern.hold_in, Some(7));
+        assert_eq!(pattern.hold_out, None);
+        assert_eq!(pattern.counter_type, Some(CounterType::Iteration));
+        assert_eq!(pattern.duration, Some(8));
+    }
+
     #[test]
     fn counter_type_deserialization() {
         let uut = CounterType::Iteration;
