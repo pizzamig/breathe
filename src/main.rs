@@ -51,11 +51,7 @@ fn main() -> anyhow::Result<()> {
         config.print_pattern_list();
         return Ok(());
     }
-    let mut pattern = config.get_pattern(&opt.pattern)?.clone();
-    pattern.pattern_length = Some(
-        opt.pattern_length
-            .unwrap_or(pattern.pattern_length.unwrap_or(config.pattern_length)),
-    );
+    let pattern = config.compute_pattern(&opt.pattern, opt.pattern_length)?;
     let bso = breathe::BreathSessionOpt { pattern: &pattern };
     tui::run(bso);
     Ok(())

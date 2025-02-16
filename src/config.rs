@@ -34,10 +34,20 @@ pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config>
 }
 
 impl Config {
-    pub(crate) fn get_pattern(&self, pattern_name: &str) -> anyhow::Result<&Pattern> {
-        self.patterns
+    pub(crate) fn compute_pattern(
+        &self,
+        pattern_name: &str,
+        opt_pattern_length: Option<PatternLength>,
+    ) -> anyhow::Result<Pattern> {
+        let mut result = self
+            .patterns
             .get(pattern_name)
-            .with_context(|| format!("Pattern {} not found", pattern_name))
+            .with_context(|| format!("Pattern {pattern_name} not found"))?
+            .clone();
+        result.pattern_length = Some(
+            opt_pattern_length.unwrap_or(result.pattern_length.unwrap_or(self.pattern_length)),
+        );
+        Ok(result)
     }
 
     pub(crate) fn print_pattern_list(&self) {
@@ -180,9 +190,35 @@ mod test {
     }
 
     #[test]
-    fn get_patterns() {
+    fn compute_pattern_lengths() {
         let config = get_standard_config();
-        let pattern = config.get_pattern("relax");
+        let p1 = config
+            .compute_pattern("relax", None)
+            .inspect_err(|e| eprintln!("{:?}", e));
+        assert!(p1.is_ok());
+        assert_eq!(
+            p1.unwrap().pattern_length,
+            Some(PatternLength::Iterations(8))
+        );
+        let p2 = config
+            .compute_pattern("relax", Some(PatternLength::Iterations(20)))
+            .inspect_err(|e| eprintln!("{:?}", e));
+        assert!(p2.is_ok());
+        assert_eq!(
+            p2.unwrap().pattern_length,
+            Some(PatternLength::Iterations(20))
+        );
+        let p3 = config
+            .compute_pattern("long_and_deep", None)
+            .inspect_err(|e| eprintln!("{:?}", e));
+        assert!(p3.is_ok());
+        assert_eq!(p3.unwrap().pattern_length, Some(PatternLength::Time(300)));
+    }
+
+    #[test]
+    fn compute_patterns() {
+        let config = get_standard_config();
+        let pattern = config.compute_pattern("relax", None);
         assert!(pattern.is_ok());
         let pattern = pattern.unwrap();
         assert_eq!(pattern.breath_in, 4);
