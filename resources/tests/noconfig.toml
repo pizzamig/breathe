@@ -1,6 +1,9 @@
 no_counter_type= "Time"
 no_duration = 300
 
+[no_pattern_length]
+Time = 1234
+
 [no_patterns]
 
 [no_patterns.relax]

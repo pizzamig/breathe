@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context};
 use serde::Deserialize;
 use std::collections::HashMap;
-use strum::{Display, EnumString};
+use strum::Display;
 
 const _GLOBAL_CONFIG_DIR_1: &str = "/etc";
 const _GLOBAL_CONFIG_DIR_2: &str = "/usr/local/etc";
@@ -15,7 +15,7 @@ pub(crate) fn get_default_config_file() -> std::path::PathBuf {
 pub(crate) struct Config {
     patterns: HashMap<String, Pattern>,
     #[serde(flatten)]
-    pub(crate) pattern_duration: PatternDuration,
+    pub(crate) pattern_length: PatternLength,
 }
 
 pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config> {
@@ -35,11 +35,9 @@ pub(crate) fn from_file(config_file: &std::path::Path) -> anyhow::Result<Config>
 
 impl Config {
     pub(crate) fn get_pattern(&self, pattern_name: &str) -> anyhow::Result<&Pattern> {
-        if self.patterns.contains_key(pattern_name) {
-            Ok(self.patterns.get(pattern_name).unwrap())
-        } else {
-            Err(anyhow!("Pattern {pattern_name} not found"))
-        }
+        self.patterns
+            .get(pattern_name)
+            .with_context(|| format!("Pattern {} not found", pattern_name))
     }
 
     pub(crate) fn print_pattern_list(&self) {
@@ -61,12 +59,19 @@ pub(crate) struct Pattern {
     pub(crate) hold_in: Option<u64>,
     pub(crate) breath_out: u64,
     pub(crate) hold_out: Option<u64>,
-    #[serde(flatten)]
-    pub(crate) pattern_duration: Option<PatternDuration>,
     pub(crate) description: String,
+    #[serde(flatten)]
+    pub(crate) pattern_length: Option<PatternLength>,
 }
 
 impl Pattern {
+    pub(crate) fn length(&self) -> u64 {
+        self.breath_in
+            + self.breath_out
+            + self.hold_in.unwrap_or_default()
+            + self.hold_out.unwrap_or_default()
+    }
+
     fn get_short_string(&self) -> String {
         format!(
             "{}-{}-{}-{}",
@@ -77,10 +82,10 @@ impl Pattern {
         )
     }
     fn get_short_session_string(&self) -> String {
-        if let Some(pattern_duration) = self.pattern_duration {
-            match pattern_duration.counter_type {
-                CounterType::Time => format!("{} seconds", pattern_duration.duration),
-                CounterType::Iteration => format!("{} iterations", pattern_duration.duration),
+        if let Some(pl) = self.pattern_length {
+            match pl {
+                PatternLength::Time(d) => format!("{d} seconds"),
+                PatternLength::Iterations(d) => format!("{d} iterations"),
             }
         } else {
             "".to_string()
@@ -88,43 +93,61 @@ impl Pattern {
     }
 }
 
-#[derive(Debug, Clone, EnumString, Display, Deserialize, PartialEq, Copy)]
-pub(crate) enum CounterType {
-    #[strum(serialize = "time", serialize = "Time")]
-    Time,
-    #[strum(
-        serialize = "iteration",
-        serialize = "iterations",
-        serialize = "Iteration",
-        serialize = "Iterations"
-    )]
-    Iteration,
-}
-
-#[derive(Debug, Copy, Clone, Deserialize)]
-pub(crate) struct PatternDuration {
-    pub(crate) counter_type: CounterType,
-    pub(crate) duration: u64,
-}
-
 use std::str::FromStr;
 
-impl FromStr for PatternDuration {
+#[derive(Debug, Clone, Display, Deserialize, PartialEq, Copy)]
+#[strum(ascii_case_insensitive)]
+pub(crate) enum PatternLength {
+    #[strum(to_string = "Time={0}")]
+    #[serde(alias = "time")]
+    Time(u64),
+    #[strum(to_string = "Iterations={0}")]
+    #[serde(alias = "iteration", alias = "Iteration", alias = "iterations")]
+    Iterations(u64),
+}
+
+impl FromStr for PatternLength {
     type Err = anyhow::Error;
 
-    fn from_str(src: &str) -> anyhow::Result<PatternDuration> {
+    fn from_str(src: &str) -> anyhow::Result<Self> {
+        let mut src = src.to_string();
+        src.retain(|c| c != ' ');
         let v: Vec<&str> = src.trim().split('=').collect();
         if v.len() != 2 {
-            return Err(anyhow!("Invalid duration: no '=' found in {}", src));
+            return Err(anyhow!(
+                "Invalid pattern length specification: no '=' found in {}",
+                src
+            ));
         }
-        let counter_type = CounterType::from_str(v.first().unwrap())
-            .with_context(|| format!("Invalid counter type {}", v.first().unwrap()))?;
         let duration = u64::from_str(v.get(1).unwrap())
             .with_context(|| format!("Invalid duration {}", v.get(1).unwrap()))?;
-        Ok(PatternDuration {
-            counter_type,
-            duration,
-        })
+        match *v.first().unwrap() {
+            "time" | "Time" => Ok(PatternLength::Time(duration)),
+            "iterations" | "Iterations" | "iteration" | "Iteration" => {
+                Ok(PatternLength::Iterations(duration))
+            }
+            _ => Err(anyhow!(
+                "Duration type {} not recognized",
+                v.first().unwrap()
+            )),
+        }
+    }
+}
+
+impl PatternLength {
+    fn _is_iterations(&self) -> bool {
+        matches!(self, PatternLength::Iterations(_))
+    }
+
+    fn _is_time(&self) -> bool {
+        matches!(self, PatternLength::Time(_))
+    }
+
+    fn _duration(&self) -> u64 {
+        match self {
+            PatternLength::Time(d) => *d,
+            PatternLength::Iterations(d) => *d,
+        }
     }
 }
 
@@ -134,7 +157,8 @@ mod test {
     use std::path::Path;
 
     fn get_standard_config() -> Config {
-        let result = from_file(Path::new("resources/tests/config.toml"));
+        let result = from_file(Path::new("resources/tests/config.toml"))
+            .inspect_err(|e| eprintln!("{:?}", e));
         assert!(result.is_ok());
         result.unwrap()
     }
@@ -165,48 +189,34 @@ mod test {
         assert_eq!(pattern.breath_out, 8);
         assert_eq!(pattern.hold_in, Some(7));
         assert_eq!(pattern.hold_out, None);
-        assert!(pattern.pattern_duration.is_some());
-        let pd = pattern.pattern_duration.unwrap();
-        assert_eq!(pd.counter_type, CounterType::Iteration);
-        assert_eq!(pd.duration, 8);
+        assert!(pattern.pattern_length.is_some());
+        assert_eq!(pattern.pattern_length, Some(PatternLength::Iterations(8)))
     }
 
-    #[test]
-    fn counter_type_deserialization() {
-        let uut = CounterType::Iteration;
-        assert_eq!(uut.to_string(), "Iterations".to_string());
-        let uut: CounterType = "iteration".to_string().parse().unwrap();
-        assert_eq!(uut, CounterType::Iteration);
-    }
     #[test]
     fn deserialization() {
         let input = include_str!("../resources/tests/config.toml");
-        let got = toml::from_str::<Config>(input);
+        let got = toml::from_str::<Config>(input).inspect_err(|e| eprintln!("{:?}", e));
         assert!(got.is_ok());
     }
 
+    fn pl_parse_test(s: &str, pl: PatternLength) {
+        // toml
+        let result: Result<PatternLength, _> = toml::from_str(s);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result, pl);
+        // from_str
+        let result: Result<PatternLength, _> = s.to_string().parse();
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result, pl);
+    }
     #[test]
-    fn pattern_duration_parsing() {
-        let input = "iterations=5";
-        let uut = PatternDuration::from_str(input);
-        assert!(uut.is_ok());
-        let uut = uut.unwrap();
-        assert_eq!(uut.counter_type, CounterType::Iteration);
-        assert_eq!(uut.duration, 5);
-
-        let input = "Time=300";
-        let uut = PatternDuration::from_str(input);
-        assert!(uut.is_ok());
-        let uut = uut.unwrap();
-        assert_eq!(uut.counter_type, CounterType::Time);
-        assert_eq!(uut.duration, 300);
-
-        let input = " Time=300 ";
-        let uut = PatternDuration::from_str(input);
-        assert!(uut.is_ok());
-
-        let input = "seconds=300";
-        let uut = PatternDuration::from_str(input);
-        assert!(uut.is_err());
+    fn pattern_length_deserialization() {
+        pl_parse_test("Iterations=5", PatternLength::Iterations(5));
+        pl_parse_test("iterations = 5", PatternLength::Iterations(5));
+        pl_parse_test("iteration = 123", PatternLength::Iterations(123));
+        pl_parse_test("time = 20", PatternLength::Time(20))
     }
 }

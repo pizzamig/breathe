@@ -1,53 +1,41 @@
 mod breathe;
 mod config;
 
-struct BreathSessionParams<'a> {
-    pattern: &'a config::Pattern,
-    session_type: config::CounterType,
-    duration: u64,
-}
-
-impl std::fmt::Display for BreathSessionParams<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let duration = match self.session_type {
-            config::CounterType::Time => "Duration:  ",
-            config::CounterType::Iteration => "Iterations:",
-        };
-        let duration_unit = match self.session_type {
-            config::CounterType::Time => "seconds",
-            _ => "",
-        };
-        write!(
-            f,
-            "Description: {}
-Breathe in:   {}
-Hold:         {}
-Breathe out:  {}
-Hold:         {}
-Session type: {}
-{}   {} {}",
-            self.pattern.description,
-            self.pattern.breath_in,
-            self.pattern.hold_in.unwrap_or(0),
-            self.pattern.breath_out,
-            self.pattern.hold_out.unwrap_or(0),
-            self.session_type,
-            duration,
-            self.duration,
-            duration_unit
-        )
-    }
+fn print_session_opt(opt: &breathe::BreathSessionOpt) {
+    let pl = opt.pattern.pattern_length.unwrap();
+    let duration_unit = if matches!(pl, config::PatternLength::Time(_)) {
+        "seconds"
+    } else {
+        ""
+    };
+    println!(
+        "Description:   {}
+Breathe in:     {}
+Hold:           {}
+Breathe out:    {}
+Hold:           {}
+Session length: {} {}",
+        opt.pattern.description,
+        opt.pattern.breath_in,
+        opt.pattern.hold_in.unwrap_or(0),
+        opt.pattern.breath_out,
+        opt.pattern.hold_out.unwrap_or(0),
+        pl,
+        duration_unit
+    )
 }
 
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-fn breathe(params: BreathSessionParams) {
-    let session =
-        breathe::BreathingSession::new(params.pattern, params.session_type, params.duration);
+fn breathe(opt: breathe::BreathSessionOpt) {
+    let session = breathe::BreathingSession::with_opt(&opt);
 
-    println!("{}", params);
-    if let config::CounterType::Iteration = params.session_type {
+    print_session_opt(&opt);
+    if matches!(
+        opt.pattern.pattern_length.unwrap(),
+        config::PatternLength::Iterations(_)
+    ) {
         session.print_params();
     }
     let user_choice = dialoguer::Confirm::new()
@@ -127,7 +115,7 @@ struct Opt {
     list: bool,
     /// specify a different duartion in the form of durationType=nn
     #[arg(short = 'd', long)]
-    pattern_duration: Option<config::PatternDuration>,
+    pattern_length: Option<config::PatternLength>,
 }
 
 fn get_level_filter(verbosity_level: u8) -> log::LevelFilter {
@@ -147,16 +135,12 @@ fn main() -> anyhow::Result<()> {
         config.print_pattern_list();
         return Ok(());
     }
-    let pattern = config.get_pattern(&opt.pattern)?;
-    let pattern_duration = match opt.pattern_duration {
-        Some(pd) => pd,
-        None => pattern.pattern_duration.unwrap_or(config.pattern_duration),
-    };
-    let session = BreathSessionParams {
-        pattern,
-        session_type: pattern_duration.counter_type,
-        duration: pattern_duration.duration,
-    };
-    breathe(session);
+    let mut pattern = config.get_pattern(&opt.pattern)?.clone();
+    pattern.pattern_length = Some(
+        opt.pattern_length
+            .unwrap_or(pattern.pattern_length.unwrap_or(config.pattern_length)),
+    );
+    let bso = breathe::BreathSessionOpt { pattern: &pattern };
+    breathe(bso);
     Ok(())
 }

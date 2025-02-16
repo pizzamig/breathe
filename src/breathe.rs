@@ -1,11 +1,12 @@
-use crate::config::{CounterType, Pattern};
+use crate::config::{Pattern, PatternLength};
 use std::collections::HashMap;
 use strum::{Display, IntoStaticStr};
 
 /// Breathing can be in 4 possible phases.
 /// This struct represent those 4 possible values
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Display, IntoStaticStr)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Hash, Display, IntoStaticStr)]
 pub(crate) enum BreathPhase {
+    #[default]
     BreathIn,
     HoldIn,
     BreathOut,
@@ -25,7 +26,7 @@ impl BreathPhase {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct BreathCycle {
     cycle: HashMap<BreathPhase, u64>,
     pub(crate) cycle_length: u64,
@@ -44,15 +45,12 @@ fn from_pattern(pattern: &Pattern) -> BreathCycle {
         .fold(1, |lcm, &x| num_integer::lcm(lcm, x));
     BreathCycle {
         cycle,
-        cycle_length: pattern.breath_in
-            + pattern.breath_out
-            + pattern.hold_in.unwrap_or(0)
-            + pattern.hold_out.unwrap_or(0),
+        cycle_length: pattern.length(),
         lcm,
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct BreathingSession {
     cycle: BreathCycle,
     session_length: u64,
@@ -63,19 +61,16 @@ pub(crate) struct BreathingSession {
 }
 
 impl BreathingSession {
-    pub(crate) fn new(pattern: &Pattern, counter_type: CounterType, duration: u64) -> Self {
-        let cycle: BreathCycle = from_pattern(pattern);
-        let session_length = match counter_type {
-            CounterType::Iteration => cycle.cycle_length * duration,
-            CounterType::Time => duration,
+    pub(crate) fn with_opt(opt: &BreathSessionOpt) -> Self {
+        let cycle: BreathCycle = from_pattern(opt.pattern);
+        let session_length = match opt.pattern.pattern_length.unwrap() {
+            PatternLength::Time(d) => d,
+            PatternLength::Iterations(d) => d * cycle.cycle_length,
         };
         BreathingSession {
             cycle,
             session_length,
-            total_counter: 0,
-            state_counter: 0,
-            current_state: BreathPhase::BreathIn,
-            state_changed: true,
+            ..Default::default()
         }
     }
 
@@ -119,8 +114,12 @@ impl BreathingSession {
         self.state_changed
     }
     pub(crate) fn print_params(&self) {
-        println!("session lenght: {} seconds", self.session_length);
+        println!("Session length: {} seconds", self.session_length);
     }
+}
+
+pub(crate) struct BreathSessionOpt<'a> {
+    pub(crate) pattern: &'a Pattern,
 }
 
 #[cfg(test)]
@@ -142,7 +141,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            pattern_duration: None,
+            pattern_length: None,
             description: "Test pattern".to_string(),
         };
         let got: BreathCycle = from_pattern(&uut);
@@ -160,7 +159,7 @@ mod test {
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            pattern_duration: None,
+            pattern_length: None,
             description: "Test pattern".to_string(),
         };
         let got: BreathCycle = from_pattern(&uut);
@@ -168,15 +167,15 @@ mod test {
     }
     #[test]
     fn breath_session_ctor_time_session() {
-        let p = Pattern {
+        let pattern = &Pattern {
             breath_in: 4,
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            pattern_duration: None,
+            pattern_length: Some(PatternLength::Time(60)),
             description: "Test pattern".to_string(),
         };
-        let got = BreathingSession::new(&p, CounterType::Time, 60);
+        let got = BreathingSession::with_opt(&BreathSessionOpt { pattern });
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldIn).unwrap(), &7);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathOut).unwrap(), &8);
@@ -185,15 +184,15 @@ mod test {
 
     #[test]
     fn breath_session_ctor_iter_session() {
-        let p = Pattern {
+        let pattern = &Pattern {
             breath_in: 4,
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            pattern_duration: None,
+            pattern_length: Some(PatternLength::Iterations(8)),
             description: "Test pattern".to_string(),
         };
-        let got = BreathingSession::new(&p, CounterType::Iteration, 8);
+        let got = BreathingSession::with_opt(&BreathSessionOpt { pattern });
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathIn).unwrap(), &4);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::HoldIn).unwrap(), &7);
         assert_eq!(got.cycle.cycle.get(&BreathPhase::BreathOut).unwrap(), &8);
@@ -202,15 +201,15 @@ mod test {
 
     #[test]
     fn breath_session_ctor_next() {
-        let p = Pattern {
+        let pattern = &Pattern {
             breath_in: 4,
             hold_in: Some(7),
             breath_out: 8,
             hold_out: None,
-            pattern_duration: None,
+            pattern_length: Some(PatternLength::Iterations(2)),
             description: "Test pattern".to_string(),
         };
-        let mut got = BreathingSession::new(&p, CounterType::Iteration, 2);
+        let mut got = BreathingSession::with_opt(&BreathSessionOpt { pattern });
         assert_eq!(got.get_current_phase_length(), 4);
         for _ in 0..4 {
             got.inc();
