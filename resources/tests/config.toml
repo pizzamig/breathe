@@ -1,5 +1,4 @@
-counter_type= "Time"
-duration = 300
+Time=300
 
 [patterns]
 
@@ -7,24 +6,21 @@ duration = 300
 breath_in = 4
 breath_out = 8
 hold_in = 7
-counter_type = "Iteration"
-duration = 8
+iterations = 8
 description = "This breathing exercise is a natural tranquilizer for the nervous system. The 8 configuration pattern is not suggested for beginners."
 
 [patterns.relax_short]
 breath_in = 4
 breath_out = 8
 hold_in = 7
-counter_type = "Iteration"
-duration = 4
+iterations = 4
 description = "This breathing exercise is a natural tranquilizer for the nervous system. The 4 configuration pattern is suggested for beginners."
 
 [patterns.stress_away]
 breath_in = 6
 breath_out = 6
 hold_in = 3
-counter_type = "Iteration"
-duration = 5
+iterations = 5
 description = "This breathing exercise aims to reduce stress and anxiety."
 
 [patterns.four]
@@ -32,15 +28,13 @@ breath_in = 4
 breath_out = 4
 hold_in = 4
 hold_out = 4
-counter_type = "Time"
-duration = 300
+time = 300
 description = "Four-square breathing or box breathing technique, is a simpletechnique you can do at any time that you feel stressed."
 
 [patterns.awake]
 breath_in = 6
 breath_out = 2
-counter_type = "Time"
-duration = 300
+time = 300
 description = "Use this technique first thing in the morning for quick burst of energy and alertness."
 
 [patterns.Pranayama]
@@ -48,15 +42,13 @@ breath_in = 7
 hold_in = 4
 breath_out = 8
 hold_out = 4
-counter_type = "Time"
-duration = 300
+time = 300
 description = "It's the formal paractice of controlling the breath, which is the source of our prana, or vital life force."
 
 [patterns.Ujjayi]
 breath_in = 7
 breath_out = 7
-counter_type = "Time"
-duration = 300
+time = 300
 description = "Ujjayi has a balancing influence on the entire cardiorespiratory stystem, releases feelings of irritation and frustration, and help calm the mind and body."
 
 [patterns.long_and_deep]
@@ -64,6 +56,5 @@ breath_in = 8
 hold_in = 7
 breath_out = 8
 hold_out = 7
-counter_type = "Time"
-duration = 300
+time = 300
 description = "It's a custom pattern, very long and deep breath. Inspired by Pranayama, it allows to slow down the natural breathing pace."

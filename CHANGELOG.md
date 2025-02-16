@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed total progression bar (for now)
 - Removed async (useless complexity)
 - Update all crates
-- .gitignore: added *.swp files (vi backup)
+- .gitignore: added \*.swp files (vi backup)
 - Replace StructOpt with clap
+- Adopt anyhow
 
 ## [0.2.4]
 ### Added
