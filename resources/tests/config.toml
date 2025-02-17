@@ -28,13 +28,11 @@ breath_in = 4
 breath_out = 4
 hold_in = 4
 hold_out = 4
-time = 300
 description = "Four-square breathing or box breathing technique, is a simpletechnique you can do at any time that you feel stressed."
 
 [patterns.awake]
 breath_in = 6
 breath_out = 2
-time = 300
 description = "Use this technique first thing in the morning for quick burst of energy and alertness."
 
 [patterns.Pranayama]
@@ -42,13 +40,11 @@ breath_in = 7
 hold_in = 4
 breath_out = 8
 hold_out = 4
-time = 300
 description = "It's the formal paractice of controlling the breath, which is the source of our prana, or vital life force."
 
 [patterns.Ujjayi]
 breath_in = 7
 breath_out = 7
-time = 300
 description = "Ujjayi has a balancing influence on the entire cardiorespiratory stystem, releases feelings of irritation and frustration, and help calm the mind and body."
 
 [patterns.long_and_deep]
@@ -56,5 +52,4 @@ breath_in = 8
 hold_in = 7
 breath_out = 8
 hold_out = 7
-time = 300
 description = "It's a custom pattern, very long and deep breath. Inspired by Pranayama, it allows to slow down the natural breathing pace."

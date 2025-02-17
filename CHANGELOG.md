@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - .gitignore: added \*.swp files (vi backup)
 - Replace StructOpt with clap
 - Adopt anyhow
+- Add back the total session progress bar (with colors)
 
 ## [0.2.4]
 ### Added
