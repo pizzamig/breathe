@@ -46,23 +46,48 @@ pub(crate) fn run(opt: breathe::BreathSessionOpt) {
     if !user_choice {
         return;
     }
+    let mb = indicatif::MultiProgress::new();
     let pb = indicatif::ProgressBar::new(session.get_lengths_lcm());
+    let pb = mb.add(pb);
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
             .progress_chars("=>-")
             .tick_chars(r#"-\|/ "#)
-            .template("{spinner:>4} {wide_bar} {msg}")
+            .template(
+                format!(
+                    "{{spinner:>4}} {{wide_bar:.cyan/blue}} {{msg:<{}}}",
+                    breathe::MAX_BREATHE_PHASE_STR_LEN + 1
+                )
+                .as_str(),
+            )
             .unwrap(),
     );
-    pb.set_message(session.phase_as_str());
+
+    let total_pb = indicatif::ProgressBar::new(session.session_length);
+    let total_pb = mb.add(total_pb);
+    total_pb.set_style(
+        indicatif::ProgressStyle::with_template(
+            format!(
+                "{{percent:>3}}% {{wide_bar:.cyan/blue}} {{eta:<{}}}",
+                breathe::MAX_BREATHE_PHASE_STR_LEN + 1
+            )
+            .as_str(),
+        )
+        .unwrap()
+        .progress_chars("=>-"),
+    );
     let session = Arc::new(Mutex::new(session));
     let timer = timer::Timer::new();
     let guard = {
         let session = session.clone();
+        pb.set_message(session.lock().unwrap().phase_as_str());
+        total_pb.reset();
+        let mb = mb.clone();
         timer.schedule_repeating(chrono::Duration::seconds(1), move || {
             let mut session = session.lock().unwrap();
             if !session.is_completed() {
                 session.inc();
+                total_pb.inc(1);
                 if session.is_state_changed() {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
                     pb.set_message(session.phase_as_str());
@@ -70,6 +95,8 @@ pub(crate) fn run(opt: breathe::BreathSessionOpt) {
                 } else {
                     pb.inc(session.get_lengths_lcm() / session.get_current_phase_length());
                 }
+            } else {
+                mb.clear().unwrap();
             }
         })
     };
@@ -79,6 +106,7 @@ pub(crate) fn run(opt: breathe::BreathSessionOpt) {
             let session = session.clone();
             let session = session.lock().unwrap();
             if session.is_completed() {
+                mb.clear().unwrap();
                 break;
             }
         }

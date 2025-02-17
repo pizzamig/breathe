@@ -14,6 +14,8 @@ pub(crate) enum BreathPhase {
 }
 impl Eq for BreathPhase {}
 
+pub(crate) const MAX_BREATHE_PHASE_STR_LEN: usize = 8;
+
 impl BreathPhase {
     // Breath phases are ordered. This function returns the next breathing phase
     fn next(self) -> Self {
@@ -53,7 +55,7 @@ fn from_pattern(pattern: &Pattern) -> BreathCycle {
 #[derive(Debug, Default, Clone)]
 pub(crate) struct BreathingSession {
     cycle: BreathCycle,
-    session_length: u64,
+    pub(crate) session_length: u64,
     total_counter: u64,
     pub(crate) current_state: BreathPhase,
     state_counter: u64,
