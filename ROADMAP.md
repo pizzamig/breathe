@@ -17,9 +17,6 @@ Improve documentation
 - references to patterns
 - more badges
 
-CI/CD
-- dependency bot in github?
-
 ## v0.4.0
 Configuration
 - find a more idiomatic way to specify the length of the exercise
