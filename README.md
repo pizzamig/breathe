@@ -2,6 +2,7 @@
 
 [![build-badge](https://github.com/pizzamig/breathe/workflows/Rust/badge.svg)](https://github.com/pizzamig/breathe/actions)
 [![Dependency Status](https://deps.rs/repo/github/pizzamig/breathe/status.svg)](https://deps.rs/repo/github/pizzamig/breathe)
+[![GitHub latest commit](https://badgen.net/github/last-commit/pizzamig/breathe)](https://github.com/pizzamig/breathe/commit/)
 
 `breathe` is a command line utility that contains breathing exercises
 
