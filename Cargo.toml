@@ -18,5 +18,5 @@ num-integer = "0.1"
 timer = "0.2.0"
 chrono = "0.4.39"
 clap = { version = "4.5.29", features = ["derive"] }
-log = "0.4.25"
+log = "0.4.26"
 anyhow = "1.0.95"
