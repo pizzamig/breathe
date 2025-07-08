@@ -12,7 +12,7 @@ indicatif = "0.17"
 dialoguer = "0.11"
 env_logger = "0.11"
 serde = { version = "1", features = ["derive"] }
-toml = { version = "0.8" }
+toml = { version = "0.9" }
 dirs = "6"
 num-integer = "0.1"
 timer = "0.2.0"
